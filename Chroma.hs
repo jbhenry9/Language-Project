@@ -7,19 +7,19 @@
         | print <expr>
 
 <expr> -> mix "(" <expr> "," <expr> ")"
-        | shade "(" <expr> "," <intval> ")"
-        | tint "(" <expr> "," <intval> ")"
+        | shade "(" <expr> "," <expr> ")"
+        | tint "(" <expr> "," <expr> ")"
         | <var>
-        | <rgbval>
-        | <swatchval>
+        | <value>
 
-<swatchval> -> swatch <rgbval>
+<value> -> <rgbval>
+         | <intval>
 
 <rgbval> -> rgb "(" <intval> "," <intval> "," <intval> ")"
 
 <intval> -> int
 
-<env> -> [(<var>, <swatchval>)]
+<env> -> [(<var>, <value>)]
 
 -}
 
@@ -37,11 +37,19 @@ data Stmt
 
 data Expr
     = Mix Expr Expr
-    | Shade Expr Int
-    | Tint Expr Int
+    | Shade Expr Expr
+    | Tint Expr Expr
     | VarExpr Var
-    | RGBVal Int Int Int
-    | SwatchVal Int Int Int
+    | ValueExpr Value
     deriving (Show, Eq)
 
-type Env = [(Var, Expr)]
+data Value
+    = RGBVal RGB
+    | IntVal Int
+    deriving (Show, Eq)
+
+data RGB
+    = RGB Int Int Int
+    deriving (Show, Eq)
+
+type Env = [(Var, Value)]
