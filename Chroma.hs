@@ -1,4 +1,4 @@
-{-
+{- 
 
 <prog> -> [<stmt>]
 
@@ -29,8 +29,6 @@
 <value> -> <rgbval>
          | <intval>
          | <hexval>
-         | true
-         | false
 
 <rgbval> -> rgb "(" <intval> "," <intval> "," <intval> ")"
 
@@ -85,14 +83,12 @@ data BoolExpr
     = GreaterColor ColorExpr ColorExpr
     | LessColor ColorExpr ColorExpr
     | EqualColor ColorExpr ColorExpr
-    | BoolLit Bool
     deriving (Show, Eq)
 
 data Value
     = RGBVal RGB
     | HexVal HEX
     | IntVal Int
-    | BoolVal Bool
     deriving (Show, Eq)
 
 data RGB
@@ -106,33 +102,38 @@ data HEX
 type Env = [(Var, Value)]
 
 
-{-
-Example program:
+{-   EXAMPLE
+
 
 swatch sunset = rgb(255, 120, 60)
 swatch ocean = hex(00, 66, CC)
+level = 20
 
 if (sunset > ocean) {
-    result = mix(sunset, ocean)
+    swatch result = mix(sunset, ocean)
     print result
 } else {
-    print ocean
+    print shade(ocean, level)
 }
--}
 
-
-{-
-Example AST:
+AST
 
 Program
-  [ Declare "sunset" (RGBExpr (RGB 255 120 60))
-  , Declare "ocean" (HEXExpr (HEX "00" "66" "CC"))
-  , If (GreaterColor (ColorVar "sunset") (ColorVar "ocean"))
-      [ Assign "result"
-          (ColorE (Mix (ColorVar "sunset") (ColorVar "ocean")))
-      , Print (ColorE (ColorVar "result"))
-      ]
-      (Just
-        [ Print (ColorE (ColorVar "ocean")) ])
-  ]
+[ Declare "sunset" (RGBExpr (RGB 255 120 60))
+, Declare "ocean" (HEXExpr (HEX "00" "66" "CC"))
+, Assign "level" (IntE (IntLit 20))
+, If
+    (GreaterColor (ColorVar "sunset") (ColorVar "ocean"))
+    [ Declare "result"
+        (Mix (ColorVar "sunset") (ColorVar "ocean"))
+    , Print (ColorE (ColorVar "result"))
+    ]
+    (Just
+        [ Print
+            (ColorE
+            (Shade (ColorVar "ocean") (IntVar "level")))
+        ])
+]
+
+
 -}
