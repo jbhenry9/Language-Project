@@ -5,10 +5,15 @@
 <stmt> -> swatch <var> "=" <expr>
         | <var> "=" <expr>
         | print <expr>
+        | if "(" <expr> ")" "{" [<stmt>] "}"
+        | if "(" <expr> ")" "{" [<stmt>] "}" else "{" [<stmt>] "}"
 
 <expr> -> mix "(" <expr> "," <expr> ")"
         | shade "(" <expr> "," <expr> ")"
         | tint "(" <expr> "," <expr> ")"
+        | <expr> ">" <expr> 
+        | <expr> "<" <expr>
+        | <expr> "==" <expr>
         | <var>
         | <value>
 
@@ -18,9 +23,9 @@
 
 <rgbval> -> rgb "(" <intval> "," <intval> "," <intval> ")"
 
-<hexval> -> hex "(" <hexpair> "," <hexpair> "," <hexpair> )"
+<hexval> -> hex "(" <hexpair> "," <hexpair> "," <hexpair> ")"
 
-<hexpair> -> hexnum hexnum
+<hexpair> -> <hexnum> <hexnum>
 
 <hexnum> -> 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
           | a | b | c | d | e | f
@@ -42,12 +47,16 @@ data Stmt
     = Declare Var Expr
     | Assign Var Expr
     | Print Expr
+    | If Expr [Stmt] (Maybe [Stmt])
     deriving (Show, Eq)
 
 data Expr
     = Mix Expr Expr
     | Shade Expr Expr
     | Tint Expr Expr
+    | Greater Expr Expr
+    | Less Expr Expr
+    | Equal Expr Expr
     | VarExpr Var
     | ValueExpr Value
     deriving (Show, Eq)
@@ -64,14 +73,33 @@ data RGB
 
 data HEX
     = HEX String String String
+    deriving (Show, Eq)
 
 type Env = [(Var, Value)]
 
 
 {-
+swatch sunset = rgb(255, 120, 60)
+swatch ocean = hex(00, 66, CC)
+
+if (sunset > ocean) {
+    swatch result = mix(sunset, ocean)
+    print result
+} else {
+    print ocean
+}
+  -}
+
+
+{-
 Program
-  [ Declare "sky" (ValueExpr (RGBVal (RGB 100 150 255)))
-  , Assign "sky" (Tint (VarExpr "sky") (ValueExpr (IntVal 20)))
-  , Print (VarExpr "sky")
+  [ Declare "sunset" (ValueExpr (RGBVal (RGB 255 120 60)))
+  , Declare "ocean" (ValueExpr (HexVal (HEX "00" "66" "CC")))
+  , If (Greater (VarExpr "sunset") (VarExpr "ocean"))
+      [ Declare "result" (Mix (VarExpr "sunset") (VarExpr "ocean"))
+      , Print (VarExpr "result")
+      ]
+      (Just
+        [ Print (VarExpr "ocean") ])
   ]
   -}
