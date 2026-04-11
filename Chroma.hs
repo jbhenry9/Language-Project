@@ -8,14 +8,16 @@
         | if "(" <expr> ")" "{" [<stmt>] "}"
         | if "(" <expr> ")" "{" [<stmt>] "}" else "{" [<stmt>] "}"
 
-<expr> -> mix "(" <expr> "," <expr> ")"
-        | shade "(" <expr> "," <expr> ")"
-        | tint "(" <expr> "," <expr> ")"
-        | <expr> ">" <expr> 
-        | <expr> "<" <expr>
-        | <expr> "==" <expr>
-        | <var>
-        | <value>
+<expr> -> <simpleexpr>
+        | <simpleexpr> ">" <simpleexpr>
+        | <simpleexpr> "<" <simpleexpr>
+        | <simpleexpr> "==" <simpleexpr>
+
+<simpleexpr> -> mix "(" <expr> "," <expr> ")"
+              | shade "(" <expr> "," <expr> ")"
+              | tint "(" <expr> "," <expr> ")"
+              | <var>
+              | <value>
 
 <value> -> <rgbval>
          | <intval>
@@ -65,6 +67,7 @@ data Value
     = RGBVal RGB
     | HexVal HEX
     | IntVal Int
+    | BoolVal Bool
     deriving (Show, Eq)
 
 data RGB
@@ -76,30 +79,3 @@ data HEX
     deriving (Show, Eq)
 
 type Env = [(Var, Value)]
-
-
-{-
-swatch sunset = rgb(255, 120, 60)
-swatch ocean = hex(00, 66, CC)
-
-if (sunset > ocean) {
-    swatch result = mix(sunset, ocean)
-    print result
-} else {
-    print ocean
-}
-  -}
-
-
-{-
-Program
-  [ Declare "sunset" (ValueExpr (RGBVal (RGB 255 120 60)))
-  , Declare "ocean" (ValueExpr (HexVal (HEX "00" "66" "CC")))
-  , If (Greater (VarExpr "sunset") (VarExpr "ocean"))
-      [ Declare "result" (Mix (VarExpr "sunset") (VarExpr "ocean"))
-      , Print (VarExpr "result")
-      ]
-      (Just
-        [ Print (VarExpr "ocean") ])
-  ]
-  -}
