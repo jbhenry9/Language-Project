@@ -2,26 +2,35 @@
 
 <prog> -> [<stmt>]
 
-<stmt> -> swatch <var> "=" <expr>
+<stmt> -> swatch <var> "=" <colorexpr>
         | <var> "=" <expr>
         | print <expr>
-        | if "(" <expr> ")" "{" [<stmt>] "}"
-        | if "(" <expr> ")" "{" [<stmt>] "}" else "{" [<stmt>] "}"
+        | if "(" <boolexpr> ")" "{" [<stmt>] "}"
+        | if "(" <boolexpr> ")" "{" [<stmt>] "}" else "{" [<stmt>] "}"
 
-<expr> -> <simpleexpr>
-        | <simpleexpr> ">" <simpleexpr>
-        | <simpleexpr> "<" <simpleexpr>
-        | <simpleexpr> "==" <simpleexpr>
+<expr> -> <colorexpr>
+        | <intexpr>
+        | <boolexpr>
 
-<simpleexpr> -> mix "(" <expr> "," <expr> ")"
-              | shade "(" <expr> "," <expr> ")"
-              | tint "(" <expr> "," <expr> ")"
-              | <var>
-              | <value>
+<colorexpr> -> mix "(" <colorexpr> "," <colorexpr> ")"
+             | shade "(" <colorexpr> "," <intexpr> ")"
+             | tint "(" <colorexpr> "," <intexpr> ")"
+             | <var>
+             | <rgbval>
+             | <hexval>
+
+<intexpr> -> <intval>
+          | <var>
+
+<boolexpr> -> <colorexpr> ">" <colorexpr>
+           | <colorexpr> "<" <colorexpr>
+           | <colorexpr> "==" <colorexpr>
 
 <value> -> <rgbval>
          | <intval>
          | <hexval>
+         | true
+         | false
 
 <rgbval> -> rgb "(" <intval> "," <intval> "," <intval> ")"
 
@@ -46,21 +55,37 @@ data Program
     deriving (Show, Eq)
 
 data Stmt
-    = Declare Var Expr
+    = Declare Var ColorExpr
     | Assign Var Expr
     | Print Expr
-    | If Expr [Stmt] (Maybe [Stmt])
+    | If BoolExpr [Stmt] (Maybe [Stmt])
     deriving (Show, Eq)
 
 data Expr
-    = Mix Expr Expr
-    | Shade Expr Expr
-    | Tint Expr Expr
-    | Greater Expr Expr
-    | Less Expr Expr
-    | Equal Expr Expr
-    | VarExpr Var
-    | ValueExpr Value
+    = ColorE ColorExpr
+    | IntE IntExpr
+    | BoolE BoolExpr
+    deriving (Show, Eq)
+
+data ColorExpr
+    = Mix ColorExpr ColorExpr
+    | Shade ColorExpr IntExpr
+    | Tint ColorExpr IntExpr
+    | ColorVar Var
+    | RGBExpr RGB
+    | HEXExpr HEX
+    deriving (Show, Eq)
+
+data IntExpr
+    = IntLit Int
+    | IntVar Var
+    deriving (Show, Eq)
+
+data BoolExpr
+    = GreaterColor ColorExpr ColorExpr
+    | LessColor ColorExpr ColorExpr
+    | EqualColor ColorExpr ColorExpr
+    | BoolLit Bool
     deriving (Show, Eq)
 
 data Value
@@ -79,3 +104,35 @@ data HEX
     deriving (Show, Eq)
 
 type Env = [(Var, Value)]
+
+
+{-
+Example program:
+
+swatch sunset = rgb(255, 120, 60)
+swatch ocean = hex(00, 66, CC)
+
+if (sunset > ocean) {
+    result = mix(sunset, ocean)
+    print result
+} else {
+    print ocean
+}
+-}
+
+
+{-
+Example AST:
+
+Program
+  [ Declare "sunset" (RGBExpr (RGB 255 120 60))
+  , Declare "ocean" (HEXExpr (HEX "00" "66" "CC"))
+  , If (GreaterColor (ColorVar "sunset") (ColorVar "ocean"))
+      [ Assign "result"
+          (ColorE (Mix (ColorVar "sunset") (ColorVar "ocean")))
+      , Print (ColorE (ColorVar "result"))
+      ]
+      (Just
+        [ Print (ColorE (ColorVar "ocean")) ])
+  ]
+-}
