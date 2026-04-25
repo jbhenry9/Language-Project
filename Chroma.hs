@@ -95,8 +95,18 @@ data RGB
     = RGB Int Int Int
     deriving (Show, Eq)
 
+data HexChar = Zero | One | Two | Three | Four | Five | Six | Seven | Eight | Nine | LA | LB | LC | LD | LE | LF | UA | UB | UC | UD | UE | UF
+    deriving Eq
+
+instance Show HexChar where
+    show Zero = "0"
+    show One = "1"
+    show LA = "a"
+    show UA = "A"
+
+type HexValue = (HexChar, HexChar)
 data HEX
-    = HEX String String String
+    = HEX HexValue HexValue HexValue
     deriving (Show, Eq)
 
 type Env = [(Var, Value)]
@@ -137,3 +147,19 @@ Program
 
 
 -}
+p1:: Program
+p1 = Program [ Declare "sunset" (RGBExpr (RGB 255 120 60))
+    , Declare "ocean" (HEXExpr (HEX (Zero, Zero) (Six, Six) (UC, UC)))
+    , Assign "level" (IntE (IntLit 20))
+    , If
+        (GreaterColor (ColorVar "sunset") (ColorVar "ocean"))
+        [ Declare "result"
+            (Mix (ColorVar "sunset") (ColorVar "ocean"))
+        , Print (ColorE (ColorVar "result"))
+        ]
+        (Just
+            [ Print
+                (ColorE
+                (Shade (ColorVar "ocean") (IntVar "level")))
+            ])
+    ]
